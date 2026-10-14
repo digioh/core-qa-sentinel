@@ -15,6 +15,8 @@ Working directory: `D:\Work\claude\core-qa-sentinel`. Design background: `PLAN.m
 | QA project | `1203348184098714` |
 | Section Upcoming | `1217391421034712` |
 | Section Ready | `1203348184098724` |
+| Section In progress (QA board) | `1203348184098725` |
+| My Tasks section In progress (Hussain) | `1208640702268612` |
 | QA Type field | `1219235193315472` |
 | QA Type = Product / Feature QA | `1219235193315473` |
 | qa-sentinel routine | `asana-qa-sentinel` |
@@ -26,6 +28,7 @@ Working directory: `D:\Work\claude\core-qa-sentinel`. Design background: `PLAN.m
 1. **Time:** current UTC time must be 14:00–23:59. Otherwise STOP, with no output and no Asana writes.
 2. **Browser collision:** call `list_task_runs` with taskId `asana-qa-sentinel`, limit 1. If the newest run has status `running`, STOP silently. qa-sentinel owns the browser right now.
 3. **Clock:** note the start time. You have a **hard budget of 80 minutes** from now (see STEP 6).
+4. **Usage baseline:** call `get_usage` (mcp__ccd_session_mgmt__get_usage) now and note the "Weekly · all models" percentUsed (W0) and context `tokensUsed` (T0). Call it again right before STEP 7 (W1, T1). Report this QA's own cost: weekly delta = W1 − W0 percentage points (integer readings, so if equal write "<1%"), and tokens = T1 − T0 (T is this session's context size, so treat it as an approximation). Never report the account's total weekly percent as the QA's cost. If the run is blocked before STEP 7, no number is needed.
 
 ## STEP 1 — PICK ONE TASK
 
@@ -38,7 +41,8 @@ Working directory: `D:\Work\claude\core-qa-sentinel`. Design background: `PLAN.m
    - `get_task` (include_subtasks). If any subtask name starts with `QA run by Claude`, skip it, because it is already done.
    - Apply the **gate check** below. If the task is gated, write `reports-core/<ID>/gated-YYYY-MM-DD.md` with the reason, then move to the next candidate. Do **not** post anything for a gated task.
    - Otherwise this is your task. Stop looking.
-4. If no candidate is left, STOP silently.
+   - If this task later turns out to be **blocked** (see STEP 3, "Blocked on a task"), come back here and continue with the next candidate in the same order. Keep the candidate list from this step; do not re-fetch it.
+4. If no candidate is left, STOP silently. If one or more tasks were blocked during this run, send the attention email first (STEP 3).
 
 `<ID>` is the ID in the task name (`QA: ID-15765 …` → `ID-15765`). If the name has no ID, use the task gid.
 
@@ -75,7 +79,16 @@ If there is no recognisable test plan (no "Test 1" structure and no steps), post
 | Delete anything | Never. Archive instead | Never |
 | Log in, type a password, create any external account | **Never** | **Never** |
 
-If Chrome is not signed in (you land on a login page), STOP. Write `reports-core/<ID>/ATTENTION.md` ("Chrome not signed in to <host>") and post nothing. The next run retries.
+**Blocked on a task.** If Chrome is not signed in to a host this task needs (you land on a login page), or you are otherwise blocked on this task and cannot continue:
+1. Run cleanup (STEP 6) for anything you already changed for this task, and close its tabs.
+2. Write or append to `reports-core/<ID>/ATTENTION.md` (UTC time and the reason). Post nothing to Asana for this task and do not move it.
+3. Record the blocked host for this run. If a later candidate needs the same host, treat it as blocked too without opening the browser again.
+4. **Go back to STEP 1 and QA the next candidate.** Before starting it, check the clock: only start a new task if fewer than 50 minutes have passed since STEP 0. Otherwise stop and go to item 5.
+5. At the end of the run (after posting the task you did QA, or when no candidate is left), send **one** email to hussain@digioh.com (Gmail `send_message`, subject `core-qa-sentinel needs attention: <ID>, <ID>`, body: for each blocked task, the task name and link, what is blocking, and what to do, e.g. sign in to <host>). Include only tasks not already emailed today (an `ATTENTION.md` entry dated today that says an email was sent). Skip the email if none are left. Note "email sent" in each included task's `ATTENTION.md`.
+
+**Blocked on the browser.** If Claude in Chrome is not connected (`tabs_context_mcp` fails twice), no task can run. STOP the whole run, write `reports-core/<ID>/ATTENTION.md` for the current task, and send the email as in item 5 (at most once per day for this reason).
+
+None of this applies to the silent gates in STEP 0 (time, collision) or when no task is eligible. Blocked tasks are retried in their normal order on the next run.
 
 **Never skip, by design.** Mark these SKIPPED with the reason:
 - A physical microphone or voice input.
@@ -156,6 +169,7 @@ Never screenshot a screen that shows a password, an API key or a token. Crop wit
      Plan overrides applied from comments: <list or none>
      Cleanup done: <list>
      Run time: <N> min
+     Token usage %: <share of the weekly limit used by THIS QA run only, not the account total. See STEP 0 item 4 for how to measure. e.g. "this QA: ~1% of weekly (start 20% -> end 21%), ~85k tokens">
      ```
 2. **Add one comment** to the **sub-task** (never to the parent) with `add_comment` `text`, written in Hussain's style (rules below).
 3. **Verify:** re-fetch the parent with `get_task` and confirm the sub-task exists and has the comment. If it is missing, retry once. If it still fails, write `reports-core/<ID>/POST_FAILED.md` containing the comment text.
@@ -182,6 +196,13 @@ If you were blocked at setup, the comment is `Unable to start, <reason>.`. Examp
 - Short and direct. Use "we" for the product ("When we click X, it …").
 - **Never @-mention anyone**, never write "Pablo", never ping.
 
+## STEP 7b — MOVE TO IN PROGRESS (only after the sub-task and comment are posted and verified)
+
+This is the one allowed change to the parent, and only its section moves:
+1. QA board: move the parent to project `1203348184098714` section **In progress** (`1203348184098725`).
+2. Hussain's personal My Tasks list: `update_tasks` with `assignee_section` = `1208640702268612` (In progress). If that fails because the section no longer exists, look it up by name with `get_my_tasks` (opt_fields `assignee_section.name,assignee_section.gid`). If there is no "In progress" section, do not create one; say so in the final output ("no In progress section in My Tasks").
+Do not do this for gated, blocked, ATTENTION or not-posted runs.
+
 ## STEP 8 — SAVE
 
 Write the following into `reports-core/<ID>/`:
@@ -196,8 +217,8 @@ If the folder already holds an earlier round, put this round in `retest-YYYY-MM-
 
 ## HARD RULES
 
-- One task per run. Only Product / Feature QA tasks, only from Upcoming or Ready.
-- **Only CREATE**: one `QA run by Claude <date>` sub-task plus one comment on it. Never edit, move, complete, assign or comment on the parent. Never set custom fields. Never touch other sub-tasks.
+- One task QA'd and posted per run. Gated and blocked tasks don't count; move on to the next candidate. Only Product / Feature QA tasks, only from Upcoming or Ready.
+- **Only CREATE**: one `QA run by Claude <date>` sub-task plus one comment on it. Never edit, complete, assign or comment on the parent; the only allowed change is the section move in STEP 7b. Never set custom fields. Never touch other sub-tasks.
 - **Never @-mention or name anyone** in Asana.
 - Never log in, never enter passwords, never create external accounts, never delete.
 - Production: no flag changes, no live publishes. Those tests are SKIPPED.
