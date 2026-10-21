@@ -98,7 +98,7 @@ Browser collision — DECIDED: separate by time, no change to qa-sentinel.
 ### 3.3 Run steps
 1. Read task, all comments, parent ticket, sibling QA tasks' latest comments.
 2. Parse plan into a test list `{test, steps[], pass, fail, env, account, flags, params}` → save `reports-core/<ID>/plan.json`.
-3. (No section moves — parent stays as is.)
+3. (No changes to the engineering ticket. The QA task is only moved to In progress after posting, see core.md STEP 7b.)
 4. Setup (see §5 permissions): login is already in Chrome; impersonate account; set flags; create/duplicate campaigns as the plan says.
 5. Execute each test literally in Chrome (Claude in Chrome tools). Evidence per step: screenshot on any deviation, Conditions Monitor text, console errors, Agent reply text.
 6. Grade each test PASS / FAIL / QUERY / SKIPPED(reason).
@@ -125,7 +125,7 @@ Skipped: Test 4 (needs a physical microphone), Test 7 (gated on 10/14 production
 Passed: Test 1, 3, 8.
 ```
   or `It is looking good.` + Skipped line if any.
-- Does **not** touch the parent: no section moves, no Issues & Queries, no completion. Hussain does those after review.
+- Moves the QA task (assigned to Hussain) to In progress on the QA board and in My Tasks after posting; nothing else on it changes. Does **not** touch the engineering ticket: no edits, no reassignment, no Issues & Queries, no completion. Hussain does those after review.
 
 ### 3.5 What it skips (says so in the comment)
 Physical microphone, OS clipboard / Explorer paste, Firefox/Safari, real Android/iPhone, Shopify admin login, Google Ads account creation, HubSpot/ESP back-office checks, nightly jobs / pixel logs / real rates (engineering-only), multi-user concurrency tests.

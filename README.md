@@ -51,7 +51,7 @@ When every test passes, the comment is `It is looking good.`, followed by the Sk
 
 ## Hard rules
 
-- **Only creates** a `QA run by Claude <date>` sub-task and its comment. It never edits, moves or completes the parent, never sets fields, and never comments on the parent.
+- **Only creates** a `QA run by Claude <date>` sub-task and its comment. After posting, it moves the QA task (assigned to Hussain) to In progress on the QA board and in My Tasks, and changes nothing else on it. It never writes to the engineering ticket (the QA task's parent), never reassigns anything, never sets fields, and never comments on either task.
 - **Never @-mentions anyone**, Pablo included.
 - On **dev2 (`mcphqdev2.digioh.com`)** it may impersonate test accounts, toggle Admin > Edit User flags, create and duplicate test campaigns, and publish to QA. It reverts all of this at cleanup.
 - On **production (`account.digioh.com`)** it makes no flag changes and no live publishes. Any test that needs them is skipped and listed.

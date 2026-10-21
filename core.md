@@ -21,6 +21,16 @@ Working directory: `D:\Work\claude\core-qa-sentinel`. Design background: `PLAN.m
 | QA Type = Product / Feature QA | `1219235193315473` |
 | qa-sentinel routine | `asana-qa-sentinel` |
 
+## TERMS (read these before anything else)
+
+| Term | What it is | Example | What you may change |
+|---|---|---|---|
+| **QA task** | The task on the QA board that you QA. It is assigned to Hussain. | `QA: ID-15694 Self-serve plans …` | **Only its section** (STEP 7b). Nothing else. |
+| **Engineering ticket** | The QA task's own parent: the engineer's ticket (often assigned to Pablo or another engineer). | `Self-serve: pageview ladder in HQ …` | **Nothing. Read only.** |
+| **Run sub-task** | The `QA run by Claude YYYY-MM-DD` sub-task you create under the QA task. | | Create it, plus one comment on it. |
+
+Never change the assignee, name, description, due date, custom fields, completion or comments of the QA task or the engineering ticket. Never touch the engineering ticket at all, and never reassign anything to Pablo or anyone else.
+
 ---
 
 ## STEP 0 — GATES (stop silently if any fails)
@@ -157,8 +167,8 @@ Never screenshot a screen that shows a password, an API key or a token. Crop wit
 
 ## STEP 7 — POST (create only, never modify)
 
-1. **Create the sub-task** with `create_tasks`:
-   - `parent`: the task gid
+1. **Create the run sub-task** with `create_tasks`:
+   - `parent`: the **QA task** gid (not the engineering ticket)
    - name: `QA run by Claude YYYY-MM-DD` (today, UTC)
    - **No assignee.** No project. No custom fields.
    - `notes`: a plain-text run summary:
@@ -171,8 +181,8 @@ Never screenshot a screen that shows a password, an API key or a token. Crop wit
      Run time: <N> min
      Token usage %: <share of the weekly limit used by THIS QA run only, not the account total. See STEP 0 item 4 for how to measure. e.g. "this QA: ~1% of weekly (start 20% -> end 21%), ~85k tokens">
      ```
-2. **Add one comment** to the **sub-task** (never to the parent) with `add_comment` `text`, written in Hussain's style (rules below).
-3. **Verify:** re-fetch the parent with `get_task` and confirm the sub-task exists and has the comment. If it is missing, retry once. If it still fails, write `reports-core/<ID>/POST_FAILED.md` containing the comment text.
+2. **Add one comment** to the **run sub-task** (never to the QA task or the engineering ticket) with `add_comment` `text`, written in Hussain's style (rules below).
+3. **Verify:** re-fetch the QA task with `get_task` and confirm the sub-task exists and has the comment. If it is missing, retry once. If it still fails, write `reports-core/<ID>/POST_FAILED.md` containing the comment text.
 
 **Comment format** (plain text, one line per item, in this order):
 
@@ -198,9 +208,20 @@ If you were blocked at setup, the comment is `Unable to start, <reason>.`. Examp
 
 ## STEP 7b — MOVE TO IN PROGRESS (only after the sub-task and comment are posted and verified)
 
-This is the one allowed change to the parent, and only its section moves:
-1. QA board: move the parent to project `1203348184098714` section **In progress** (`1203348184098725`).
-2. Hussain's personal My Tasks list: `update_tasks` with `assignee_section` = `1208640702268612` (In progress). If that fails because the section no longer exists, look it up by name with `get_my_tasks` (opt_fields `assignee_section.name,assignee_section.gid`). If there is no "In progress" section, do not create one; say so in the final output ("no In progress section in My Tasks").
+Move the **QA task** (the one assigned to Hussain, e.g. `QA: ID-15694 …`) to In progress. This section move is the only change you ever make to it. Do it in one `update_tasks` call on the QA task gid with exactly these two fields and nothing else:
+
+```json
+[{ "task": "<QA task gid>",
+   "add_projects": [{ "project_id": "1203348184098714", "section_id": "1203348184098725" }],
+   "assignee_section": "1208640702268612" }]
+```
+
+- `add_projects` with the QA project moves it to the QA board's **In progress** section (the task is already in that project, so this only changes its section).
+- `assignee_section` moves it to **In progress** in Hussain's My Tasks. It does **not** change the assignee; the QA task stays assigned to Hussain. Never pass `assignee`.
+- If `assignee_section` fails because the section no longer exists, look it up by name with `get_my_tasks` (opt_fields `assignee_section.name,assignee_section.gid`) and retry with that gid. If there is no "In progress" section, do not create one; still do the QA board move and say "no In progress section in My Tasks" in the final output.
+- Never call `update_tasks` on the engineering ticket. Never move, reassign or edit it.
+- If the move is refused (permission or API error), do not retry another way. Note it in `run-log.md` and the final output so Hussain can move it himself.
+
 Do not do this for gated, blocked, ATTENTION or not-posted runs.
 
 ## STEP 8 — SAVE
@@ -218,7 +239,7 @@ If the folder already holds an earlier round, put this round in `retest-YYYY-MM-
 ## HARD RULES
 
 - One task QA'd and posted per run. Gated and blocked tasks don't count; move on to the next candidate. Only Product / Feature QA tasks, only from Upcoming or Ready.
-- **Only CREATE**: one `QA run by Claude <date>` sub-task plus one comment on it. Never edit, complete, assign or comment on the parent; the only allowed change is the section move in STEP 7b. Never set custom fields. Never touch other sub-tasks.
+- **Only CREATE**: one `QA run by Claude <date>` run sub-task plus one comment on it. The only other write allowed is the STEP 7b section move of the **QA task** (assigned to Hussain). Never edit, complete, reassign or comment on the QA task. Never write anything to the engineering ticket (the QA task's parent, usually assigned to Pablo or another engineer). Never set custom fields. Never touch other sub-tasks.
 - **Never @-mention or name anyone** in Asana.
 - Never log in, never enter passwords, never create external accounts, never delete.
 - Production: no flag changes, no live publishes. Those tests are SKIPPED.
