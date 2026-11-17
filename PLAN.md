@@ -13,7 +13,7 @@ Goal: a Claude Code desktop routine that picks Product / Feature QA tasks from t
 | Product Release QA board (`1209283663848605`) | Already **archived**. Core tasks are still multi-homed there (sections New task / In progress / Submitted / Completed) |
 | QA Type field (`1219235193315472`) | Product / Feature QA = `1219235193315473`, Final QA = `1219235193315474`. An Asana rule sets **Final QA** on every task added to the QA board (since ~Oct 8) — Hussain is fixing the rule |
 | QA Type backfill | **Done 2026-10-14**: 23 core tasks set to Product / Feature QA (10 open, 13 completed). Not changed: `1218717326667659` (Khizer, digioh.com JS fix) and `1211307337371261` (TEMPLATE - Testing REAL Campaigns) — judgment calls |
-| Final QA automation | `qa-sentinel` routine (`D:\Work\claude\qa-sentinel`), every 3 h, 14:00–24:00 UTC, Ready section only, 6-agent fan-out, posts `--For QAer-- Claude <date>` sub-task. Working; Ready is currently empty |
+| Final QA automation | `qa-sentinel` routine (`D:\Work\claude\qa-sentinel`), every 3 h, no time gate, Ready section only, 6-agent fan-out, posts `--For QAer-- Claude <date>` sub-task. Working; Ready is currently empty |
 | Core QA automation | None |
 
 Open core tasks today: ID-15778, 15690, 15443, 15675, 15672, 15780, 15765, 14849, 15089, plus `1218692434149265` (AI campaigns publish as file — "not testable yet" until Pablo pings).
@@ -71,18 +71,24 @@ QA board task, incomplete
 | Setting | Value |
 |---|---|
 | Model | **Sonnet** (routine and any subagents) |
-| Schedule | Cron `47 1-22/3 * * *` (local PKT), time gate **14:00–24:00 UTC** — same window and cadence as qa-sentinel, offset 1.5 h |
+| Schedule | Cron `47 1-22/3 * * *` (local PKT), no time gate — same cadence as qa-sentinel, offset 1.5 h |
 | Working dir | `D:\Work\claude\core-qa-sentinel`, repo `digioh/core-qa-sentinel` (playbook `core.md`, reports in `reports-core/<ID>/`) |
 | Browser | Claude in Chrome (Hussain's logged-in Chrome) |
 
 Browser collision — DECIDED: separate by time, no change to qa-sentinel.
 
-| qa-sentinel fires (PKT) | core-qa-sentinel fires (PKT) | UTC | In 14–24 UTC window? |
-|---|---|---|---|
-| 18:17 | 19:47 | 14:47 | core only (sentinel 13:17 UTC is outside) |
-| 21:17 | 22:47 | 17:47 | both |
-| 00:17 | 01:47 | 20:47 | both |
-| 03:17 | 04:47 | 23:47 | both |
+| qa-sentinel fires (PKT) | core-qa-sentinel fires (PKT) | UTC |
+|---|---|---|
+| 00:17 | 01:47 | 20:47 |
+| 03:17 | 04:47 | 23:47 |
+| 06:17 | 07:47 | 02:47 |
+| 09:17 | 10:47 | 05:47 |
+| 12:17 | 13:47 | 08:47 |
+| 15:17 | 16:47 | 11:47 |
+| 18:17 | 19:47 | 14:47 |
+| 21:17 | 22:47 | 17:47 |
+
+Both now fire all day (no time gate).
 
 - Each routine gets a 1.5 h slot before the other fires. qa-sentinel runs median ~42 min, worst seen ~90 min; core runs are expected to be shorter (one task, one browser leg).
 - Residual risk: a qa-sentinel run longer than ~90 min overlaps core. Guard (core side only): at start, call `list_task_runs("asana-qa-sentinel")`; if the latest run is `running`, stop silently and wait for the next slot.
@@ -196,7 +202,7 @@ Decided (2026-10-14):
 - Separate routine `core-qa-sentinel`.
 - Output = `QA run by Claude <date>` sub-task with findings; agent **never mentions Pablo** or anyone; Hussain posts his own findings on the parent.
 - Model: Sonnet.
-- Schedule: same window/cadence as qa-sentinel, offset 1.5 h (`47 1-22/3 * * *` PKT, 14:00–24:00 UTC) to avoid browser collision; core skips if qa-sentinel is still running.
+- Schedule: same cadence as qa-sentinel, no time gate, offset 1.5 h (`47 1-22/3 * * *` PKT) to avoid browser collision; core skips if qa-sentinel is still running.
 - Sub-task unassigned.
 - Screenshots: snipboard.io via `upload_image` (verified).
 - Risky actions: allowed on dev2 per §5; production changes skipped.

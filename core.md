@@ -35,10 +35,9 @@ Never change the assignee, name, description, due date, custom fields, completio
 
 ## STEP 0 — GATES (stop silently if any fails)
 
-1. **Time:** current UTC time must be 14:00–23:59. Otherwise STOP, with no output and no Asana writes.
-2. **Browser collision:** call `list_task_runs` with taskId `asana-qa-sentinel`, limit 1. If the newest run has status `running`, STOP silently. qa-sentinel owns the browser right now.
-3. **Clock:** note the start time. You have a **hard budget of 80 minutes** from now (see STEP 6).
-4. **Usage baseline:** call `get_usage` (mcp__ccd_session_mgmt__get_usage) now and note the "Weekly · all models" percentUsed (W0) and context `tokensUsed` (T0). Call it again right before STEP 7 (W1, T1). Report this QA's own cost: weekly delta = W1 − W0 percentage points (integer readings, so if equal write "<1%"), and tokens = T1 − T0 (T is this session's context size, so treat it as an approximation). Never report the account's total weekly percent as the QA's cost. If the run is blocked before STEP 7, no number is needed.
+1. **Browser collision:** call `list_task_runs` with taskId `asana-qa-sentinel`, limit 1. If the newest run has status `running`, STOP silently. qa-sentinel owns the browser right now.
+2. **Clock:** note the start time. You have a **hard budget of 80 minutes** from now (see STEP 6).
+3. **Usage baseline:** call `get_usage` (mcp__ccd_session_mgmt__get_usage) now and note the "Weekly · all models" percentUsed (W0) and context `tokensUsed` (T0). Call it again right before STEP 7 (W1, T1). Report this QA's own cost: weekly delta = W1 − W0 percentage points (integer readings, so if equal write "<1%"), and tokens = T1 − T0 (T is this session's context size, so treat it as an approximation). Never report the account's total weekly percent as the QA's cost. If the run is blocked before STEP 7, no number is needed.
 
 ## STEP 1 — PICK ONE TASK
 
@@ -98,7 +97,7 @@ If there is no recognisable test plan (no "Test 1" structure and no steps), post
 
 **Blocked on the browser.** If Claude in Chrome is not connected (`tabs_context_mcp` fails twice), no task can run. STOP the whole run, write `reports-core/<ID>/ATTENTION.md` for the current task, and send the email as in item 5 (at most once per day for this reason).
 
-None of this applies to the silent gates in STEP 0 (time, collision) or when no task is eligible. Blocked tasks are retried in their normal order on the next run.
+None of this applies to the silent gates in STEP 0 (collision) or when no task is eligible. Blocked tasks are retried in their normal order on the next run.
 
 **Never skip, by design.** Mark these SKIPPED with the reason:
 - A physical microphone or voice input.

@@ -11,7 +11,7 @@ Sister project: [`qa-sentinel`](../qa-sentinel) handles client **Final QA** (qui
 ## How it works
 
 ```
-Every 3 h (offset from qa-sentinel), 14:00–24:00 UTC only
+Every 3 h (offset from qa-sentinel), no time gate
   │
   ├─ qa-sentinel still running?  → stop silently
   ├─ Find ONE task on the QA board:
@@ -67,9 +67,9 @@ When every test passes, the comment is `It is looking good.`, followed by the Sk
 |---|---|
 | Routine ID | `core-qa-sentinel` (task file: `%USERPROFILE%/.claude/scheduled-tasks/core-qa-sentinel/SKILL.md`) |
 | Model | Sonnet (`model: claude-sonnet-5-5` in SKILL.md) |
-| Cron | `47 1-22/3 * * *` (local PKT; fires 19:47, 22:47, 01:47, 04:47 within the window) |
-| Time gate | 14:00–24:00 UTC |
-| qa-sentinel | `17 */3 * * *`, same window. The 1.5 h offset avoids browser collisions |
+| Cron | `47 1-22/3 * * *` (local PKT; fires every 3 h, around the clock) |
+| Time gate | None (removed) |
+| qa-sentinel | `17 */3 * * *`, same cadence. The 1.5 h offset avoids browser collisions |
 | Browser | Claude in Chrome |
 | Requires | Claude desktop app open, Chrome connected and signed in to HQ (dev2 + prod) |
 
