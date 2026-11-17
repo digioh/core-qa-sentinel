@@ -1,10 +1,14 @@
 # Product QA — core-qa-sentinel
 
-A Claude Code desktop routine that QAs **Product / Feature QA** tasks (HQ, Digioh Agent, Smart Rules, display rules editor, runtime) from the Asana **QA** board. It runs the engineer's test plan in Chrome and posts findings in Hussain's style as a sub-task.
+A Claude Code desktop routine that QAs **Product / Feature QA** tasks (HQ, Digioh Agent, Smart Rules, display rules editor, runtime) from the Asana **QA** board. It runs the engineer's test plan in Chrome and posts findings as a sub-task, in a short plain-text QA style.
 
-Sister project: [`qa-sentinel`](../qa-sentinel) handles client **Final QA** (quizzes and campaigns). The two never touch each other's tasks. They are split by the Asana **QA Type** field.
+Sister project: `qa-sentinel` (a separate repo, not needed to run this one) handles client **Final QA** (quizzes and campaigns). The two never touch each other's tasks. They are split by the Asana **QA Type** field.
 
-> Status: **routine created 2026-10-14, enabled**. The playbook is [core.md](core.md); design and decisions are in [PLAN.md](PLAN.md).
+> **New here or taking over?** Start with [SETUP.md](SETUP.md): prerequisites, first supervised run, day-to-day running and troubleshooting. The playbook is [core.md](core.md); design and decisions are in [PLAN.md](PLAN.md).
+
+## Who it picks up tasks for
+
+**It only picks up QA tasks assigned to the person running it.** At the start of each run it asks Asana who is signed in (`get_me`) and ignores tasks assigned to anyone else or to no one. Blocker emails and the My Tasks move also go to that same person, so whoever clones the repo uses their own Asana, Gmail and Chrome sessions and nothing is tied to one person. There is no time-of-day restriction: it can run at any hour.
 
 ---
 
@@ -30,7 +34,7 @@ Every 3 h (offset from qa-sentinel), no time gate
   └─ Save everything to reports-core/<ID>/
 ```
 
-Hussain reviews the sub-task, then posts his own findings on the parent and mentions Pablo himself.
+The runner reviews the sub-task, then posts their own findings on the parent and mentions the engineer themselves.
 
 ---
 
@@ -51,8 +55,10 @@ When every test passes, the comment is `It is looking good.`, followed by the Sk
 
 ## Hard rules
 
-- **Only creates** a `QA run by Claude <date>` sub-task and its comment. After posting, it moves the QA task (assigned to Hussain) to In progress on the QA board and in My Tasks, and changes nothing else on it. It never writes to the engineering ticket (the QA task's parent), never reassigns anything, never sets fields, and never comments on either task.
-- **Never @-mentions anyone**, Pablo included.
+- **Only creates** a `QA run by Claude <date>` sub-task and its comment. After posting, it moves the QA task (assigned to the runner) to In progress on the QA board and in the runner's My Tasks (looked up by name; skipped if they have no such section), and changes nothing else on it. It never writes to the engineering ticket (the QA task's parent), never reassigns anything, never sets fields, and never comments on either task.
+- **Never @-mentions anyone**, engineers included.
+- **Only tasks assigned to the runner.** Other people's and unassigned tasks are never touched.
+- If blocked (for example Chrome is signed out of a host), it skips that task, goes on to the next one, and sends **one email to the runner** at the end.
 - On **dev2 (`mcphqdev2.digioh.com`)** it may impersonate test accounts, toggle Admin > Edit User flags, create and duplicate test campaigns, and publish to QA. It reverts all of this at cleanup.
 - On **production (`account.digioh.com`)** it makes no flag changes and no live publishes. Any test that needs them is skipped and listed.
 - It never logs in or enters passwords. Chrome must already be signed in.
@@ -123,6 +129,6 @@ If snipboard is down, it posts a text-only finding and keeps the PNG in `reports
 
 ## Running it
 
-- **By hand (first time):** open a Claude Code session in this folder and say "follow core.md for task <gid>". The first run also pre-approves tool permissions, which is what keeps unattended runs from stalling.
+- **By hand (first time):** follow [SETUP.md](SETUP.md). It has the exact prompt and the "Always allow" permissions to grant on the first supervised run.
 - **Scheduled:** after the routine is created, it shows in the desktop app's **Routines** sidebar. Use "Run now" there to trigger it on demand.
 - **Pause:** flip it off in the Routines sidebar.

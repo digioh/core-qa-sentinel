@@ -1,2 +1,10 @@
+# Run output: screenshots and logs can hold account IDs, customer data, internal HQ screens
 reports-core/
+
+# Secrets and per-machine config. Never commit these. Copy .mcp.json.example to .mcp.json locally.
+.mcp.json
+.env
+.env.*
+!.env.example
 .claude/settings.local.json
+*.local.json

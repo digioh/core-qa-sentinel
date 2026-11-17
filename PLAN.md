@@ -72,8 +72,8 @@ QA board task, incomplete
 |---|---|
 | Model | **Sonnet** (routine and any subagents) |
 | Schedule | Cron `47 1-22/3 * * *` (local PKT), no time gate — same cadence as qa-sentinel, offset 1.5 h |
-| Working dir | `D:\Work\claude\core-qa-sentinel`, repo `digioh/core-qa-sentinel` (playbook `core.md`, reports in `reports-core/<ID>/`) |
-| Browser | Claude in Chrome (Hussain's logged-in Chrome) |
+| Working dir | The folder the repo is cloned into (originally `D:\Work\claude\core-qa-sentinel`), repo `digioh/core-qa-sentinel` (playbook `core.md`, reports in `reports-core/<ID>/`) |
+| Browser | Claude in Chrome (the runner's logged-in Chrome) |
 
 Browser collision — DECIDED: separate by time, no change to qa-sentinel.
 
@@ -96,7 +96,7 @@ Both now fire all day (no time gate).
 - Note: cron is local Pakistan time (UTC+5); qa-sentinel has ~5 min jitter.
 
 ### 3.2 Pickup rules (core)
-- QA Type = Product / Feature QA, incomplete, assigned to Hussain, section Upcoming or Ready (or In progress for retest — see 3.6).
+- QA Type = Product / Feature QA, incomplete, **assigned to the person running the agent** (identified with Asana `get_me`; other people's and unassigned tasks are never picked up), section Upcoming or Ready (or In progress for retest — see 3.6).
 - No `(QA run by Claude)` marker comment yet for the current round.
 - Not gated (parent ready / release date reached / no "not testable yet" comment without a follow-up ping).
 - One task per run, oldest first.
@@ -118,7 +118,7 @@ Both now fire all day (no time gate).
    - Retest rounds go in `retest-YYYY-MM-DD/` so round 1 is never overwritten.
 
 ### 3.4 What it posts — DECIDED: sub-task, no mentions
-The agent **only creates a sub-task** on the QA task. It never comments on the parent and **never mentions Pablo (or anyone)**. Hussain reviews it and posts his own findings on the parent, mentioning Pablo himself.
+The agent **only creates a sub-task** on the QA task. It never comments on the parent and **never mentions the engineer (or anyone)**. The runner (the person whose sessions the agent uses) reviews it and posts their own findings on the parent, mentioning the engineer themselves.
 
 - Sub-task name: `QA run by Claude YYYY-MM-DD` (round 2+: `QA run by Claude YYYY-MM-DD (retest)`). Also the pickup marker — a task with one for the current round is skipped.
 - Sub-task left **open**, **unassigned**.
@@ -131,7 +131,7 @@ Skipped: Test 4 (needs a physical microphone), Test 7 (gated on 10/14 production
 Passed: Test 1, 3, 8.
 ```
   or `It is looking good.` + Skipped line if any.
-- Moves the QA task (assigned to Hussain) to In progress on the QA board and in My Tasks after posting; nothing else on it changes. Does **not** touch the engineering ticket: no edits, no reassignment, no Issues & Queries, no completion. Hussain does those after review.
+- Moves the QA task (assigned to the runner) to In progress on the QA board and in the runner's My Tasks (section looked up by name) after posting; nothing else on it changes. Does **not** touch the engineering ticket: no edits, no reassignment, no Issues & Queries, no completion. The runner does those after review.
 
 ### 3.5 What it skips (says so in the comment)
 Physical microphone, OS clipboard / Explorer paste, Firefox/Safari, real Android/iPhone, Shopify admin login, Google Ads account creation, HubSpot/ESP back-office checks, nightly jobs / pixel logs / real rates (engineering-only), multi-user concurrency tests.
@@ -154,7 +154,7 @@ Claude cannot put an image on the OS clipboard, but Claude in Chrome's **`upload
 4. Wait ~3 s; the tab's `location.href` becomes `https://snipboard.io/<id>.jpg` ("Saved as:" on the page). Read it with `javascript_tool` → put it in the finding line.
 5. Navigate the snipboard tab back to `https://snipboard.io` for the next upload.
 
-Fallback if snipboard is down: text-only finding + local file in `reports-core/<ID>/` for Hussain to attach (Asana connector cannot upload attachments).
+Fallback if snipboard is down: text-only finding + local file in `reports-core/<ID>/` for the runner to attach (Asana connector cannot upload attachments).
 
 Note: snipboard links are public-by-URL (same as today's practice). Avoid screenshots that show credentials or customer PII.
 
@@ -200,7 +200,7 @@ Success bar (suggested): ≥90% of Hussain's findings matched, ≤1 false positi
 
 Decided (2026-10-14):
 - Separate routine `core-qa-sentinel`.
-- Output = `QA run by Claude <date>` sub-task with findings; agent **never mentions Pablo** or anyone; Hussain posts his own findings on the parent.
+- Output = `QA run by Claude <date>` sub-task with findings; agent **never mentions the engineer** or anyone; the runner posts their own findings on the parent. Only tasks assigned to the runner are picked up (Asana `get_me`).
 - Model: Sonnet.
 - Schedule: same cadence as qa-sentinel, no time gate, offset 1.5 h (`47 1-22/3 * * *` PKT) to avoid browser collision; core skips if qa-sentinel is still running.
 - Sub-task unassigned.
